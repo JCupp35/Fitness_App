@@ -1,7 +1,8 @@
 import {
+  GENDER_OPTIONS,
   GOAL_OPTIONS,
-  HEIGHT_UNITS,
-  WEIGHT_UNITS,
+  IMPERIAL_HEIGHT_OPTIONS,
+  MEASUREMENT_SYSTEM_OPTIONS,
   WORKOUT_LOCATION_OPTIONS,
 } from '../constants/options';
 
@@ -12,13 +13,63 @@ function FitnessForm({
   formData,
   errors,
   onFieldChange,
+  onMeasurementSystemChange,
   onEquipmentChange,
   onGeneratePlan,
 }) {
   const isHome = formData.workoutLocation === 'home';
+  const isImperial = formData.measurementSystem === 'imperial';
 
   return (
     <form className="space-y-5" onSubmit={onGeneratePlan} noValidate>
+      <div>
+        <p className="mb-2 block text-sm font-semibold text-slate-700">Units</p>
+        <div
+          className="inline-grid w-full max-w-xs grid-cols-2 rounded-full border border-slate-300 bg-slate-100 p-1"
+          role="group"
+          aria-label="Measurement system"
+        >
+          {MEASUREMENT_SYSTEM_OPTIONS.map((option) => {
+            const isSelected = formData.measurementSystem === option.value;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => onMeasurementSystemChange(option.value)}
+                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition focus:outline-none ${
+                  isSelected
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'text-slate-700 hover:text-slate-900'
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <fieldset>
+        <legend className="mb-2 block text-sm font-semibold text-slate-700">Gender</legend>
+        <div className="flex gap-6">
+          {GENDER_OPTIONS.map((gender) => (
+            <label key={gender.value} className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="radio"
+                name="gender"
+                value={gender.value}
+                checked={formData.gender === gender.value}
+                onChange={(event) => onFieldChange('gender', event.target.value)}
+                className="h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-600"
+              />
+              {gender.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
       <div className="grid gap-5 md:grid-cols-2">
         <div>
           <label
@@ -27,7 +78,20 @@ function FitnessForm({
           >
             Height
           </label>
-          <div className="flex gap-2">
+          {isImperial ? (
+            <select
+              id="height-value"
+              value={formData.height.value}
+              onChange={(event) => onFieldChange('height.value', event.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-700 focus:outline-none"
+            >
+              {IMPERIAL_HEIGHT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          ) : (
             <input
               id="height-value"
               type="number"
@@ -35,23 +99,10 @@ function FitnessForm({
               step="0.1"
               value={formData.height.value}
               onChange={(event) => onFieldChange('height.value', event.target.value)}
-              placeholder="Enter height"
+              placeholder="Enter height in cm"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-700 focus:outline-none"
             />
-            <select
-              id="height-unit"
-              aria-label="Height Unit"
-              value={formData.height.unit}
-              onChange={(event) => onFieldChange('height.unit', event.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-700 focus:outline-none"
-            >
-              {HEIGHT_UNITS.map((unit) => (
-                <option key={unit.value} value={unit.value}>
-                  {unit.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          )}
           <FieldError message={errors.height} />
         </div>
 
@@ -62,30 +113,20 @@ function FitnessForm({
           >
             Weight
           </label>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <input
               id="weight-value"
-              type="number"
-              min="0"
-              step="0.1"
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*[.]?[0-9]*"
               value={formData.weight.value}
               onChange={(event) => onFieldChange('weight.value', event.target.value)}
               placeholder="Enter weight"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-700 focus:outline-none"
             />
-            <select
-              id="weight-unit"
-              aria-label="Weight Unit"
-              value={formData.weight.unit}
-              onChange={(event) => onFieldChange('weight.unit', event.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-700 focus:outline-none"
-            >
-              {WEIGHT_UNITS.map((unit) => (
-                <option key={unit.value} value={unit.value}>
-                  {unit.label}
-                </option>
-              ))}
-            </select>
+            <span className="rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
+              {isImperial ? 'lb' : 'kg'}
+            </span>
           </div>
           <FieldError message={errors.weight} />
         </div>

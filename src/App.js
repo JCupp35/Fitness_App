@@ -10,15 +10,35 @@ import {
 } from './services/planStorage';
 import { hasValidationErrors, validateFitnessInput } from './utils/validation';
 
+const IMPERIAL_DEFAULT_HEIGHT_INCHES = '69';
+
+const getMeasurementDefaults = (measurementSystem) =>
+  measurementSystem === 'metric'
+    ? {
+        height: {
+          value: '',
+          unit: 'cm',
+        },
+        weight: {
+          value: '',
+          unit: 'kg',
+        },
+      }
+    : {
+        height: {
+          value: IMPERIAL_DEFAULT_HEIGHT_INCHES,
+          unit: 'in',
+        },
+        weight: {
+          value: '',
+          unit: 'lb',
+        },
+      };
+
 const createInitialFormData = () => ({
-  height: {
-    value: '',
-    unit: 'in',
-  },
-  weight: {
-    value: '',
-    unit: 'lb',
-  },
+  measurementSystem: 'imperial',
+  gender: 'male',
+  ...getMeasurementDefaults('imperial'),
   goal: '',
   daysPerWeek: '',
   workoutLocation: '',
@@ -43,6 +63,7 @@ const toInteger = (value) => {
 };
 
 const normalizeInput = (formData) => ({
+  gender: formData.gender || undefined,
   height: {
     value: toNumber(formData.height.value),
     unit: formData.height.unit,
@@ -84,22 +105,22 @@ function App() {
 
   const handleFieldChange = (field, value) => {
     setFormData((current) => {
-      if (field === 'height.value' || field === 'height.unit') {
+      if (field === 'height.value') {
         return {
           ...current,
           height: {
             ...current.height,
-            [field.split('.')[1]]: value,
+            value,
           },
         };
       }
 
-      if (field === 'weight.value' || field === 'weight.unit') {
+      if (field === 'weight.value') {
         return {
           ...current,
           weight: {
             ...current.weight,
-            [field.split('.')[1]]: value,
+            value,
           },
         };
       }
@@ -109,6 +130,14 @@ function App() {
         [field]: value,
       };
     });
+  };
+
+  const handleMeasurementSystemChange = (measurementSystem) => {
+    setFormData((current) => ({
+      ...current,
+      measurementSystem,
+      ...getMeasurementDefaults(measurementSystem),
+    }));
   };
 
   const handleEquipmentChange = (equipmentKey, checked) => {
@@ -179,6 +208,7 @@ function App() {
           formData={formData}
           errors={errors}
           onFieldChange={handleFieldChange}
+          onMeasurementSystemChange={handleMeasurementSystemChange}
           onEquipmentChange={handleEquipmentChange}
           onGeneratePlan={handleGeneratePlan}
         />
