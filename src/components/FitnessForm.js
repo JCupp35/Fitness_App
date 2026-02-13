@@ -12,6 +12,7 @@ const FieldError = ({ message }) =>
 function FitnessForm({
   formData,
   errors,
+  isGenerating,
   onFieldChange,
   onMeasurementSystemChange,
   onEquipmentChange,
@@ -229,9 +230,14 @@ function FitnessForm({
 
       <button
         type="submit"
-        className="inline-flex items-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
+        disabled={isGenerating}
+        className={`inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition ${
+          isGenerating
+            ? 'cursor-not-allowed bg-slate-500'
+            : 'bg-slate-900 hover:bg-slate-700'
+        }`}
       >
-        Generate Plan
+        {isGenerating ? 'Generating...' : 'Generate Plan'}
       </button>
     </form>
   );
