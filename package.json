@@ -15,6 +15,7 @@
   "scripts": {
     "prestart": "npm run tailwind:build",
     "start": "npm-run-all -p tailwind:watch start:react",
+    "start:archia-debug": "npm run tailwind:build && REACT_APP_DEBUG_ARCHIA=true npm-run-all -p tailwind:watch start:react",
     "start:react": "react-scripts start",
     "prebuild": "npm run tailwind:build",
     "build": "react-scripts build",
