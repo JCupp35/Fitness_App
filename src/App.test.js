@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import App from './App';
 
 const fillAndGeneratePlan = async () => {
-  await userEvent.type(screen.getByLabelText(/^height$/i), '70');
   await userEvent.type(screen.getByLabelText(/^weight$/i), '180');
   await userEvent.selectOptions(screen.getByLabelText(/goal/i), 'build_muscle');
   await userEvent.type(screen.getByLabelText(/days per week/i), '3');
@@ -13,6 +12,46 @@ const fillAndGeneratePlan = async () => {
 
 beforeEach(() => {
   window.localStorage.clear();
+});
+
+test('defaults to imperial mode with male selected and 5ft 9in height', () => {
+  render(<App />);
+
+  const imperialToggle = screen.getByRole('button', { name: /imperial/i });
+  const metricToggle = screen.getByRole('button', { name: /metric/i });
+  const heightField = screen.getByLabelText(/^height$/i);
+  const maleRadio = screen.getByLabelText(/^male$/i);
+
+  expect(imperialToggle).toHaveAttribute('aria-pressed', 'true');
+  expect(metricToggle).toHaveAttribute('aria-pressed', 'false');
+  expect(heightField).toHaveValue('69');
+  expect(screen.getByRole('option', { name: '5ft 9in' }).selected).toBe(true);
+  expect(maleRadio).toBeChecked();
+});
+
+test('switching units resets height and weight and updates field controls', async () => {
+  render(<App />);
+
+  const weightField = screen.getByLabelText(/^weight$/i);
+  await userEvent.type(weightField, '180');
+
+  await userEvent.click(screen.getByRole('button', { name: /metric/i }));
+
+  const metricHeightInput = screen.getByRole('spinbutton', { name: /^height$/i });
+  expect(metricHeightInput).toHaveValue(null);
+  expect(screen.getByLabelText(/^weight$/i)).toHaveValue('');
+  expect(screen.getByText(/^kg$/i)).toBeInTheDocument();
+
+  await userEvent.type(metricHeightInput, '180');
+  await userEvent.type(screen.getByLabelText(/^weight$/i), '81');
+
+  await userEvent.click(screen.getByRole('button', { name: /imperial/i }));
+
+  const imperialHeightSelect = screen.getByLabelText(/^height$/i);
+  expect(imperialHeightSelect).toHaveValue('69');
+  expect(screen.getByRole('option', { name: '5ft 9in' }).selected).toBe(true);
+  expect(screen.getByLabelText(/^weight$/i)).toHaveValue('');
+  expect(screen.getByText(/^lb$/i)).toBeInTheDocument();
 });
 
 test('home selection reveals equipment fields', async () => {
