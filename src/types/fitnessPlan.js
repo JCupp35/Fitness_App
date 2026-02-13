@@ -1,6 +1,7 @@
 /**
  * @typedef {"in" | "cm"} HeightUnit
  * @typedef {"lb" | "kg"} WeightUnit
+ * @typedef {"male" | "female"} Gender
  * @typedef {"build_muscle" | "lose_weight" | "endurance" | "general_fitness"} GoalType
  * @typedef {"home" | "gym"} WorkoutLocation
  *
@@ -13,6 +14,7 @@
  * @property {boolean} dipStation
  *
  * @typedef {Object} FitnessInput
+ * @property {Gender=} gender
  * @property {Measurement} height
  * @property {Measurement} weight
  * @property {GoalType} goal

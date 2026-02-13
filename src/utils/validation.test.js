@@ -32,6 +32,7 @@ describe('validateFitnessInput', () => {
 
   test('accepts valid gym submission', () => {
     const errors = validateFitnessInput({
+      gender: 'female',
       height: { value: 182, unit: 'cm' },
       weight: { value: 82, unit: 'kg' },
       goal: 'endurance',
@@ -46,7 +47,7 @@ describe('validateFitnessInput', () => {
     expect(errors).toEqual({});
   });
 
-  test('accepts valid home submission', () => {
+  test('accepts valid home submission without gender', () => {
     const errors = validateFitnessInput({
       height: { value: 70, unit: 'in' },
       weight: { value: 175, unit: 'lb' },
