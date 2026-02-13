@@ -13,10 +13,16 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "prestart": "npm run tailwind:build",
+    "start": "npm-run-all -p tailwind:watch start:react",
+    "start:react": "react-scripts start",
+    "prebuild": "npm run tailwind:build",
     "build": "react-scripts build",
+    "pretest": "npm run tailwind:build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "tailwind:build": "tailwindcss -i ./src/index.tailwind.css -o ./src/tailwind.css --minify",
+    "tailwind:watch": "tailwindcss -i ./src/index.tailwind.css -o ./src/tailwind.css --watch"
   },
   "eslintConfig": {
     "extends": [
@@ -35,5 +41,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "npm-run-all": "^4.1.5",
+    "tailwindcss": "^4.1.18"
   }
 }
