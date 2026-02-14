@@ -1,6 +1,7 @@
-import { generatePlan } from './planGenerator';
+import { generatePlan } from '@/services/planGenerator';
+import type { FitnessInput } from '@/types/fitnessPlan';
 
-const input = {
+const input: FitnessInput = {
   height: { value: 70, unit: 'in' },
   weight: { value: 180, unit: 'lb' },
   goal: 'build_muscle',
@@ -22,7 +23,7 @@ const DAY_NAMES = [
   'Sunday',
 ];
 
-const buildPlanOutput = (daysCount) => ({
+const buildPlanOutput = (daysCount: number) => ({
   title: `Build Muscle ${daysCount}-Day Workout Plan`,
   days: Array.from({ length: daysCount }, (_, index) => ({
     day: DAY_NAMES[index],
@@ -32,7 +33,7 @@ const buildPlanOutput = (daysCount) => ({
   notes: 'Warm up for 5 minutes and recover well.',
 });
 
-const makeCompletedResponse = (text) => ({
+const makeCompletedResponse = (text: string) => ({
   status: 'completed',
   output: [
     {
@@ -49,20 +50,19 @@ const makeCompletedResponse = (text) => ({
 
 describe('generatePlan', () => {
   const originalFetch = global.fetch;
+  let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    process.env.REACT_APP_ARCHIA_TOKEN = 'test-token';
-    process.env.REACT_APP_ARCHIA_AGENT_NAME = 'Fitness-Plan-Generator';
-    delete process.env.REACT_APP_ARCHIA_BASE_URL;
+    vi.stubEnv('VITE_ARCHIA_TOKEN', 'test-token');
+    vi.stubEnv('VITE_ARCHIA_AGENT_NAME', 'Fitness-Plan-Generator');
 
-    global.fetch = jest.fn();
+    fetchMock = vi.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
   });
 
   afterEach(() => {
-    delete process.env.REACT_APP_ARCHIA_TOKEN;
-    delete process.env.REACT_APP_ARCHIA_AGENT_NAME;
-    delete process.env.REACT_APP_ARCHIA_BASE_URL;
-    jest.clearAllMocks();
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
   });
 
   afterAll(() => {
@@ -70,7 +70,7 @@ describe('generatePlan', () => {
   });
 
   test('returns parsed plan from Archia API on first attempt', async () => {
-    global.fetch.mockResolvedValue({
+    fetchMock.mockResolvedValue({
       ok: true,
       json: async () =>
         makeCompletedResponse(JSON.stringify(buildPlanOutput(input.daysPerWeek))),
@@ -82,16 +82,16 @@ describe('generatePlan', () => {
     expect(plan.days).toHaveLength(3);
     expect(plan.notes).toMatch(/Warm up/i);
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    const fetchArgs = global.fetch.mock.calls[0][1];
-    const body = JSON.parse(fetchArgs.body);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const fetchArgs = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(fetchArgs.body as string);
     expect(body.model).toBe('agent:Fitness-Plan-Generator');
     expect(body.stream).toBe(false);
     expect(body.temperature).toBe(0);
   });
 
   test('retries once on day-count mismatch and succeeds', async () => {
-    global.fetch
+    fetchMock
       .mockResolvedValueOnce({
         ok: true,
         json: async () =>
@@ -106,16 +106,16 @@ describe('generatePlan', () => {
     const plan = await generatePlan(input);
 
     expect(plan.days).toHaveLength(input.daysPerWeek);
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
 
-    const retryArgs = global.fetch.mock.calls[1][1];
-    const retryBody = JSON.parse(retryArgs.body);
+    const retryArgs = fetchMock.mock.calls[1]?.[1] as RequestInit;
+    const retryBody = JSON.parse(retryArgs.body as string);
     expect(retryBody.temperature).toBe(0);
     expect(retryBody.input).toMatch(/Strict retry mode/i);
   });
 
   test('fails after retry when day-count mismatch persists', async () => {
-    global.fetch
+    fetchMock
       .mockResolvedValueOnce({
         ok: true,
         json: async () =>
@@ -128,21 +128,21 @@ describe('generatePlan', () => {
       });
 
     await expect(generatePlan(input)).rejects.toThrow(/after retry/i);
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   test('does not retry on malformed JSON output', async () => {
-    global.fetch.mockResolvedValue({
+    fetchMock.mockResolvedValue({
       ok: true,
       json: async () => makeCompletedResponse('not json at all'),
     });
 
     await expect(generatePlan(input)).rejects.toThrow(/not valid JSON/i);
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   test('does not retry on API failed status', async () => {
-    global.fetch.mockResolvedValue({
+    fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
         status: 'failed',
@@ -153,24 +153,20 @@ describe('generatePlan', () => {
     await expect(generatePlan(input)).rejects.toThrow(
       /agent unavailable in this workspace/i,
     );
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   test('throws when token is missing', async () => {
-    delete process.env.REACT_APP_ARCHIA_TOKEN;
+    vi.stubEnv('VITE_ARCHIA_TOKEN', '');
 
-    await expect(generatePlan(input)).rejects.toThrow(
-      /Missing REACT_APP_ARCHIA_TOKEN/i,
-    );
-    expect(global.fetch).not.toHaveBeenCalled();
+    await expect(generatePlan(input)).rejects.toThrow(/Missing VITE_ARCHIA_TOKEN/i);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   test('throws when agent name is missing', async () => {
-    delete process.env.REACT_APP_ARCHIA_AGENT_NAME;
+    vi.stubEnv('VITE_ARCHIA_AGENT_NAME', '');
 
-    await expect(generatePlan(input)).rejects.toThrow(
-      /Missing REACT_APP_ARCHIA_AGENT_NAME/i,
-    );
-    expect(global.fetch).not.toHaveBeenCalled();
+    await expect(generatePlan(input)).rejects.toThrow(/Missing VITE_ARCHIA_AGENT_NAME/i);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

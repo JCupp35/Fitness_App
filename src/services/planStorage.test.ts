@@ -4,9 +4,10 @@ import {
   deletePlan,
   getPlans,
   updatePlan,
-} from './planStorage';
+} from '@/services/planStorage';
+import type { FitnessPlan } from '@/types/fitnessPlan';
 
-const samplePlan = {
+const samplePlan: FitnessPlan = {
   id: 'plan-1',
   createdAt: '2026-02-13T00:00:00.000Z',
   input: {
@@ -48,9 +49,9 @@ describe('planStorage', () => {
       notes: 'Updated notes',
     });
 
-    expect(updated.title).toBe('Updated Plan Title');
-    expect(updated.notes).toBe('Updated notes');
-    expect(getPlans()[0].title).toBe('Updated Plan Title');
+    expect(updated?.title).toBe('Updated Plan Title');
+    expect(updated?.notes).toBe('Updated notes');
+    expect(getPlans()[0]?.title).toBe('Updated Plan Title');
   });
 
   test('deletes plans', () => {

@@ -1,4 +1,4 @@
-import { validateFitnessInput } from './validation';
+import { validateFitnessInput } from '@/utils/validation';
 
 describe('validateFitnessInput', () => {
   test('rejects missing required fields', () => {

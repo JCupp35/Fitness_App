@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import App from './App';
+import App from '@/App';
 
-const createCompletedResponse = (text) => ({
+const createCompletedResponse = (text: string) => ({
   status: 'completed',
   output: [
     {
@@ -27,7 +27,7 @@ const DAY_NAMES = [
   'Sunday',
 ];
 
-const buildPlanOutput = (daysCount) =>
+const buildPlanOutput = (daysCount: number): string =>
   JSON.stringify({
     title: `Build Muscle ${daysCount}-Day Workout Plan`,
     days: Array.from({ length: daysCount }, (_, index) => ({
@@ -40,38 +40,43 @@ const buildPlanOutput = (daysCount) =>
 
 const defaultPlanOutput = buildPlanOutput(3);
 
-const mockArchiaSuccess = () => {
-  global.fetch.mockResolvedValue({
-    ok: true,
-    json: async () => createCompletedResponse(defaultPlanOutput),
-  });
-};
-
-const fillAndGeneratePlan = async () => {
-  await userEvent.type(screen.getByLabelText(/^weight$/i), '180');
-  await userEvent.selectOptions(screen.getByLabelText(/goal/i), 'build_muscle');
-  await userEvent.type(screen.getByLabelText(/days per week/i), '3');
-  await userEvent.selectOptions(screen.getByLabelText(/workout location/i), 'home');
-  await userEvent.click(screen.getByRole('button', { name: /generate plan/i }));
-};
-
 describe('App', () => {
   const originalFetch = global.fetch;
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  const selectOption = async (label: RegExp, option: RegExp) => {
+    await userEvent.click(screen.getByRole('combobox', { name: label }));
+    await userEvent.click(await screen.findByRole('option', { name: option }));
+  };
+
+  const mockArchiaSuccess = () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => createCompletedResponse(defaultPlanOutput),
+    });
+  };
+
+  const fillAndGeneratePlan = async () => {
+    await userEvent.type(screen.getByLabelText(/^weight$/i), '180');
+    await selectOption(/goal/i, /build muscle/i);
+    await userEvent.type(screen.getByLabelText(/days per week/i), '3');
+    await selectOption(/workout location/i, /^home$/i);
+    await userEvent.click(screen.getByRole('button', { name: /generate plan/i }));
+  };
 
   beforeEach(() => {
     window.localStorage.clear();
-    process.env.REACT_APP_ARCHIA_TOKEN = 'test-token';
-    process.env.REACT_APP_ARCHIA_AGENT_NAME = 'Fitness-Plan-Generator';
-    delete process.env.REACT_APP_ARCHIA_BASE_URL;
-    global.fetch = jest.fn();
+    vi.stubEnv('VITE_ARCHIA_TOKEN', 'test-token');
+    vi.stubEnv('VITE_ARCHIA_AGENT_NAME', 'Fitness-Plan-Generator');
+
+    fetchMock = vi.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
     mockArchiaSuccess();
   });
 
   afterEach(() => {
-    delete process.env.REACT_APP_ARCHIA_TOKEN;
-    delete process.env.REACT_APP_ARCHIA_AGENT_NAME;
-    delete process.env.REACT_APP_ARCHIA_BASE_URL;
-    jest.clearAllMocks();
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
   });
 
   afterAll(() => {
@@ -83,13 +88,11 @@ describe('App', () => {
 
     const imperialToggle = screen.getByRole('button', { name: /imperial/i });
     const metricToggle = screen.getByRole('button', { name: /metric/i });
-    const heightField = screen.getByLabelText(/^height$/i);
     const maleRadio = screen.getByLabelText(/^male$/i);
 
     expect(imperialToggle).toHaveAttribute('aria-pressed', 'true');
     expect(metricToggle).toHaveAttribute('aria-pressed', 'false');
-    expect(heightField).toHaveValue('69');
-    expect(screen.getByRole('option', { name: '5ft 9in' }).selected).toBe(true);
+    expect(screen.getByRole('combobox', { name: /^height$/i })).toHaveTextContent('5ft 9in');
     expect(maleRadio).toBeChecked();
   });
 
@@ -111,9 +114,7 @@ describe('App', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /imperial/i }));
 
-    const imperialHeightSelect = screen.getByLabelText(/^height$/i);
-    expect(imperialHeightSelect).toHaveValue('69');
-    expect(screen.getByRole('option', { name: '5ft 9in' }).selected).toBe(true);
+    expect(screen.getByRole('combobox', { name: /^height$/i })).toHaveTextContent('5ft 9in');
     expect(screen.getByLabelText(/^weight$/i)).toHaveValue('');
     expect(screen.getByText(/^lb$/i)).toBeInTheDocument();
   });
@@ -122,7 +123,7 @@ describe('App', () => {
     render(<App />);
 
     expect(screen.queryByLabelText(/pull-up bar/i)).not.toBeInTheDocument();
-    await userEvent.selectOptions(screen.getByLabelText(/workout location/i), 'home');
+    await selectOption(/workout location/i, /^home$/i);
     expect(screen.getByLabelText(/pull-up bar/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/dip station/i)).toBeInTheDocument();
   });
@@ -131,15 +132,13 @@ describe('App', () => {
     render(<App />);
     await fillAndGeneratePlan();
 
-    expect(
-      await screen.findByText(/build muscle 3-day workout plan/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/build muscle 3-day workout plan/i)).toBeInTheDocument();
     expect(screen.getByText(/focus 1/i)).toBeInTheDocument();
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   test('shows API error and does not create a plan when generation fails', async () => {
-    global.fetch.mockResolvedValueOnce({
+    fetchMock.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         status: 'failed',
@@ -154,12 +153,14 @@ describe('App', () => {
       await screen.findByText(/agent unavailable in this workspace\./i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/no plans yet\. fill out the form and click generate plan to create one\./i),
+      screen.getByText(
+        /no plans yet\. fill out the form and click generate plan to create one\./i,
+      ),
     ).toBeInTheDocument();
   });
 
   test('shows retry day-count error and does not create a plan', async () => {
-    global.fetch
+    fetchMock
       .mockResolvedValueOnce({
         ok: true,
         json: async () => createCompletedResponse(buildPlanOutput(4)),
@@ -172,13 +173,13 @@ describe('App', () => {
     render(<App />);
     await fillAndGeneratePlan();
 
+    expect(await screen.findByText(/agent returned an invalid day count twice/i)).toBeInTheDocument();
     expect(
-      await screen.findByText(/agent returned an invalid day count twice/i),
+      screen.getByText(
+        /no plans yet\. fill out the form and click generate plan to create one\./i,
+      ),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/no plans yet\. fill out the form and click generate plan to create one\./i),
-    ).toBeInTheDocument();
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   test('editing title and notes persists after remount', async () => {
@@ -216,14 +217,18 @@ describe('App', () => {
     await userEvent.click(screen.getByRole('button', { name: /delete/i }));
 
     expect(
-      screen.getByText(/no plans yet\. fill out the form and click generate plan to create one\./i),
+      screen.getByText(
+        /no plans yet\. fill out the form and click generate plan to create one\./i,
+      ),
     ).toBeInTheDocument();
 
     unmount();
     render(<App />);
 
     expect(
-      screen.getByText(/no plans yet\. fill out the form and click generate plan to create one\./i),
+      screen.getByText(
+        /no plans yet\. fill out the form and click generate plan to create one\./i,
+      ),
     ).toBeInTheDocument();
   });
 });

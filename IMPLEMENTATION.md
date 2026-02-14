@@ -4,10 +4,11 @@
 Build a single-page web app that collects fitness intake data and generates a workout plan via an Archia agent. Users can create, read, update, and delete plans locally.
 
 ## Current Architecture
-- Frontend: React (Create React App, JavaScript)
-- Styling: Tailwind CSS v4 (CLI build pipeline)
-- Persistence: `localStorage` via `src/services/planStorage.js`
-- Plan generation: Archia Cloud Responses API via `src/services/planGenerator.js`
+- Frontend: React + Vite + TypeScript
+- Styling: Tailwind CSS v4 + shadcn/ui component primitives
+- Persistence: `localStorage` via `src/services/planStorage.ts`
+- Plan generation: Archia Cloud Responses API via `src/services/planGenerator.ts`
+- Testing: Vitest + React Testing Library
 
 ## Data Model
 ### Intake model
@@ -49,23 +50,14 @@ Build a single-page web app that collects fitness intake data and generates a wo
 10. User can edit plan title/notes inline and delete plans.
 
 ## Archia Setup
-Use `ARCHIA_API.md` as the source of truth for setup and troubleshooting.
-
-1. Open `https://console.archia.app`.
-2. Switch to the correct organization and team workspace.
-3. Generate an API key in that same workspace (API Keys page).
-4. Verify API access before plan generation:
-   - `GET /v1/models` with your bearer token.
-   - `GET /v1/agent` and confirm the exact agent name/casing.
-5. Configure local environment variables:
-   - `REACT_APP_ARCHIA_BASE_URL=https://registry.archia.app` (optional; defaults to this value)
-   - `REACT_APP_ARCHIA_TOKEN=<workspace_api_key>` (required)
-   - `REACT_APP_ARCHIA_AGENT_NAME=<exact name from GET /v1/agent>` (required)
-6. Run the app and submit intake form data.
-7. If the agent is visible in Console but not available via API, resolve workspace mismatch (key and agent must be in the same workspace).
+1. Create a `.env.local` file with:
+   - `VITE_ARCHIA_BASE_URL=https://registry.archia.app` (optional; defaults to this value)
+   - `VITE_ARCHIA_TOKEN=<workspace_api_key>` (required)
+   - `VITE_ARCHIA_AGENT_NAME=<exact agent name>` (required)
+2. Run `npm run dev` and submit intake form data.
 
 ## Known Limitations
-- API key is configured client-side for hackathon velocity (not production-safe).
+- API key is configured client-side for velocity (not production-safe).
 - Generation fails closed: no local fallback plan is created when API/generation fails.
 - No backend or authentication.
 - Unit system switch does not convert values; it resets height/weight by design.

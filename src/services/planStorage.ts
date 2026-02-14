@@ -1,45 +1,50 @@
+import type { FitnessPlan } from '@/types/fitnessPlan';
+
 export const STORAGE_KEY = 'fitness_plan_maker.v1.plans';
 
-const hasLocalStorage = () =>
+const hasLocalStorage = (): boolean =>
   typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 
-const parsePlans = (value) => {
+const parsePlans = (value: string | null): FitnessPlan[] => {
   if (!value) {
     return [];
   }
 
   try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? (parsed as FitnessPlan[]) : [];
+  } catch {
     return [];
   }
 };
 
-const savePlans = (plans) => {
+const savePlans = (plans: FitnessPlan[]): void => {
   if (!hasLocalStorage()) {
     return;
   }
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
 };
 
-export const getPlans = () => {
+export const getPlans = (): FitnessPlan[] => {
   if (!hasLocalStorage()) {
     return [];
   }
   return parsePlans(window.localStorage.getItem(STORAGE_KEY));
 };
 
-export const createPlan = (plan) => {
+export const createPlan = (plan: FitnessPlan): FitnessPlan => {
   const currentPlans = getPlans();
   const nextPlans = [plan, ...currentPlans];
   savePlans(nextPlans);
   return plan;
 };
 
-export const updatePlan = (id, partial) => {
+export const updatePlan = (
+  id: string,
+  partial: Partial<Pick<FitnessPlan, 'title' | 'notes'>>,
+): FitnessPlan | null => {
   const currentPlans = getPlans();
-  let updatedPlan = null;
+  let updatedPlan: FitnessPlan | null = null;
 
   const nextPlans = currentPlans.map((plan) => {
     if (plan.id !== id) {
@@ -60,7 +65,7 @@ export const updatePlan = (id, partial) => {
   return updatedPlan;
 };
 
-export const deletePlan = (id) => {
+export const deletePlan = (id: string): void => {
   const currentPlans = getPlans();
   const nextPlans = currentPlans.filter((plan) => plan.id !== id);
   savePlans(nextPlans);
