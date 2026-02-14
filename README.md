@@ -10,6 +10,16 @@ React app for generating and managing personalized workout plans.
 - shadcn/ui-style component primitives in `src/components/ui`
 - Vitest + React Testing Library
 
+## Typography
+- Primary font source: self-hosted `Inter` via `@fontsource-variable/inter`
+- Fallback strategy: modern system font stack for consistent performance and broad platform coverage
+- Tokens:
+  - `--app-font-sans`: default UI/body stack
+  - `--app-font-display`: display stack (currently aliased to `--app-font-sans`)
+  - `--app-font-serif`: serif stack for future editorial use
+  - `--app-font-mono`: monospace stack for code/technical text
+- Tailwind mappings in `src/index.css`: `--font-sans`, `--font-serif`, `--font-mono`
+
 ## Environment
 Create `/Users/justincupp/Desktop/Archia-Hackathon-2026/.env.local` with:
 
