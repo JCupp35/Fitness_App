@@ -3,8 +3,11 @@
 ## Decision Log
 - 2026-02-13: Persistence for v1 is browser localStorage (`fitness_plan_maker.v1.plans`).
 - 2026-02-13: App structure is single-page (form + generated plans list).
+- 2026-02-13: Unit controls moved to a single top-level measurement-system toggle (Imperial default).
+- 2026-02-13: Gender is optional with Male/Female options (Male default in UI).
+- 2026-02-13: Imperial height uses presets from 4ft 0in to 7ft 0in (default 5ft 9in).
 - 2026-02-14: Migrated stack to Vite + TypeScript.
-- 2026-02-14: Adopted shadcn/ui-style component primitives with Tailwind CSS v4.
+- 2026-02-14: Adopted shadcn/Radix UI primitives with Tailwind CSS v4.
 - 2026-02-14: Migrated test runner to Vitest.
 
 ## Current Assumptions
