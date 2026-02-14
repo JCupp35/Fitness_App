@@ -10,6 +10,9 @@
 
 # production
 /build
+/dist
+*.tsbuildinfo
+/.vite
 
 # misc
 .DS_Store
