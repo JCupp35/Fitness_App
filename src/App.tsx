@@ -272,7 +272,7 @@ function App() {
     <main className="mx-auto min-h-screen w-full max-w-5xl px-4 py-10 sm:px-6">
       <Card className="mb-8 rounded-3xl border-slate-200 bg-white">
         <CardHeader>
-          <CardTitle className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+          <CardTitle className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             Fitness Plan Maker
           </CardTitle>
           <CardDescription className="max-w-2xl text-sm text-slate-600 sm:text-base">
