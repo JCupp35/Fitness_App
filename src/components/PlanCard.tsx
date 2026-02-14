@@ -1,6 +1,20 @@
 import { useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import type { FitnessPlan } from '@/types/fitnessPlan';
 
-function PlanCard({ plan, onUpdate, onDelete }) {
+interface PlanCardProps {
+  plan: FitnessPlan;
+  onUpdate: (id: string, partial: Partial<Pick<FitnessPlan, 'title' | 'notes'>>) => void;
+  onDelete: (id: string) => void;
+}
+
+function PlanCard({ plan, onUpdate, onDelete }: PlanCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState(plan.title);
   const [draftNotes, setDraftNotes] = useState(plan.notes);
@@ -26,71 +40,67 @@ function PlanCard({ plan, onUpdate, onDelete }) {
   const createdDate = new Date(plan.createdAt).toLocaleDateString();
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-      <header className="mb-3 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
+    <Card className="rounded-2xl border-slate-200 bg-slate-50">
+      <CardHeader className="flex flex-wrap items-start justify-between gap-3 space-y-0">
+        <div className="min-w-0 space-y-2">
           {isEditing ? (
             <div>
-              <label
+              <Label
                 htmlFor={`title-${plan.id}`}
                 className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500"
               >
                 Plan title
-              </label>
-              <input
+              </Label>
+              <Input
                 id={`title-${plan.id}`}
                 value={draftTitle}
                 onChange={(event) => setDraftTitle(event.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-700 focus:outline-none"
               />
             </div>
           ) : (
-            <h3 className="truncate text-lg font-bold text-slate-900">{plan.title}</h3>
+            <CardTitle className="truncate text-lg font-bold text-slate-900">{plan.title}</CardTitle>
           )}
-          <p className="mt-1 text-xs text-slate-500">Created {createdDate}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-slate-500">Created {createdDate}</p>
+            <Badge variant="outline">{plan.days.length}-day split</Badge>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {isEditing ? (
             <>
-              <button
-                type="button"
-                onClick={handleSave}
-                className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
-              >
+              <Button type="button" size="sm" onClick={handleSave}>
                 Save
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                size="sm"
+                variant="outline"
                 onClick={() => {
                   setDraftTitle(plan.title);
                   setDraftNotes(plan.notes);
                   setIsEditing(false);
                 }}
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
               >
                 Cancel
-              </button>
+              </Button>
             </>
           ) : (
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-            >
+            <Button type="button" size="sm" variant="outline" onClick={() => setIsEditing(true)}>
               Edit
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
+            size="sm"
+            variant="destructive"
             onClick={() => onDelete(plan.id)}
-            className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
           >
             Delete
-          </button>
+          </Button>
         </div>
-      </header>
+      </CardHeader>
 
-      <div className="space-y-3">
+      <CardContent className="space-y-3">
         {plan.days.map((dayPlan) => (
           <section
             key={`${plan.id}-${dayPlan.day}`}
@@ -106,23 +116,23 @@ function PlanCard({ plan, onUpdate, onDelete }) {
             </ul>
           </section>
         ))}
-      </div>
+      </CardContent>
 
-      <footer className="mt-4">
+      <CardFooter className="block">
+        <Separator className="mb-4" />
         {isEditing ? (
           <div>
-            <label
+            <Label
               htmlFor={`notes-${plan.id}`}
               className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500"
             >
               Plan notes
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               id={`notes-${plan.id}`}
               rows={3}
               value={draftNotes}
               onChange={(event) => setDraftNotes(event.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-700 focus:outline-none"
             />
           </div>
         ) : (
@@ -130,8 +140,8 @@ function PlanCard({ plan, onUpdate, onDelete }) {
             <span className="font-semibold text-slate-900">Notes:</span> {plan.notes}
           </p>
         )}
-      </footer>
-    </article>
+      </CardFooter>
+    </Card>
   );
 }
 

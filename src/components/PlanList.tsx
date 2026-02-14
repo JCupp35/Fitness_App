@@ -1,6 +1,13 @@
-import PlanCard from './PlanCard';
+import PlanCard from '@/components/PlanCard';
+import type { FitnessPlan } from '@/types/fitnessPlan';
 
-function PlanList({ plans, onUpdate, onDelete }) {
+interface PlanListProps {
+  plans: FitnessPlan[];
+  onUpdate: (id: string, partial: Partial<Pick<FitnessPlan, 'title' | 'notes'>>) => void;
+  onDelete: (id: string) => void;
+}
+
+function PlanList({ plans, onUpdate, onDelete }: PlanListProps) {
   if (plans.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">
